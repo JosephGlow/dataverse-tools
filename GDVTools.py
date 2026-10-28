@@ -10,7 +10,7 @@ from PowerPlatform.Dataverse.client import DataverseClient
 class TokenCredential:
     """Class inherited from Azure SDK for Python https://learn.microsoft.com/en-us/python/api/azure-core/azure.core.credentials.tokencredential?view=azure-python"""
 
-def rowcount(table:str,tuid:str,base_url:str,statecode:str|int=None,credential:TokenCredential=None,print_progress:bool=None):
+def rowcount(table:str,tuid:str,base_url:str,statecode:int=None,credential:TokenCredential=None,print_progress:bool=None):
     """Read-only count of total rows (records) in a Dataverse table.  
       
     Required
@@ -22,17 +22,20 @@ def rowcount(table:str,tuid:str,base_url:str,statecode:str|int=None,credential:T
     Optional
     ________  
     `credential`: Proof Key for Code Exchange; *TokenCredential*; *None* prompts manual login using InteractiveBrowserCredential() from azure.identity)  
-    `statecode`: Filter rows counted by StateCode choice Label or Value; 0/Active/1/Inactive/...; *None* counts rows regardless of status.  
+    `statecode`: Filter rows counted by StateCode choice integer Value; 0/1/...; *None* counts rows regardless of status.  
     `print_progress`: bool (True = print batch processing information and final count, False/None = pass)
       
     """
-    if credential is None:
-        credential = InteractiveBrowserCredential()
 
     if statecode is None:
-        sc = ""
+        batch_filter = ""
+        last_filter = ""
     else:
-        sc = f"WHERE statecode = {statecode}"
+        batch_filter = f"WHERE statecode = {statecode}"
+        last_filter = f"AND statecode = {statecode}"
+
+    if credential is None:
+        credential = InteractiveBrowserCredential()
 
     if print_progress == True:
         p_batch = print(f"Processed batch: {batch_count}, running total: {total_count}")
@@ -51,14 +54,13 @@ def rowcount(table:str,tuid:str,base_url:str,statecode:str|int=None,credential:T
         if last_id:
             query = f"""
                 SELECT TOP {batch_size} {tuid}
-                FROM {table} {sc}
-                AND {tuid} > '{last_id}'
+                FROM {table} WHERE {tuid} > '{last_id}'{last_filter}
                 ORDER BY {tuid}
             """
         else:
             query = f"""
                 SELECT TOP {batch_size} {tuid}
-                FROM {table} {sc}
+                FROM {table} {batch_filter}
                 ORDER BY {tuid}
             """
 
