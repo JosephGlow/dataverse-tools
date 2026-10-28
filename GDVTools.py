@@ -43,7 +43,7 @@ def rowcount(table:str,tuid:str,base_url:str,statecode:str|int=None,credential:T
 
     client = DataverseClient(base_url, credential)
 
-    batch_size = 10
+    batch_size = 5000
     last_id = None
     total_count = 0
     
